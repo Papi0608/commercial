@@ -1,0 +1,2 @@
+ cd /var/www/zf/module
+  642  tar cvzf ~/sample02.tgz Sample02

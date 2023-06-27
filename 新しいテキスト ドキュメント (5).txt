@@ -1,0 +1,25 @@
+public function getDetail($id) {
+        $fmt = "SELECT * FROM `upload_csv1` WHERE `id` = %s";
+        $qry = sprintf($fmt, $this->esc($id));
+        $rst = $this->query($qry);
+        $rec = [];
+        foreach ($rst as $k => $d) {
+            $rec[$k]['id']         = $d->id;
+            $rec[$k]['file_1']     = $d->file_1;
+            $rec[$k]['file_2']     = $d->file_2;
+            $rec[$k]['upload_at']  = $this->ymdhms2ymdhm($d->upload_at);
+            $rec[$k]['created_at']        = $this->ymdhms2ymdhm($d->created_at);
+        }
+
+        if (empty($rec[0])) {
+            return [
+                'id'         => '',
+                'file_1'     => '',
+                'file_2'     => '',
+                'upload_at'  => '',
+                'created_at' => '',
+            ];
+        } else {
+            return $rec[0];
+        }
+    }

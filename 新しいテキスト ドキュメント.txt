@@ -1,0 +1,9 @@
+CREATE TABLE `upload_csv2` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `file_name` text NOT NULL,
+  `file_1` text NOT NULL,
+  `file_2` text NOT NULL,
+  `upload_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8;
