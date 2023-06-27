@@ -1,0 +1,90 @@
+$ sudo su -
+
+# yum -y install gcc gcc-c++ emacs net-tools nc git lynx ImageMagick ImageMagick-devel
+
+###
+### nkf
+###
+
+# wget https://datagram.co.jp/job/pise/nkf-2.1.5.tar.gz
+# tar xzf nkf-2.1.5.tar.gz
+# rm -f nkf-2.1.5.tar.gz
+# cd nkf-2.1.5
+# make
+# cp nkf /usr/local/bin
+# cd ..
+# rm -Rf nkf-2.1.5
+
+###
+### .bashrc
+###
+<<<
+ファイルに以下の４行を追加する。
+# .bashrc
+
+# User specific aliases and functions
+
+#alias rm='rm -i'
+#alias cp='cp -i'
+#alias mv='mv -i'
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+alias ls='ls'
+alias ll='ls -la'
+alias e='emacs'
+alias delb='rm -f *~ .??*~'
+>>>
+自分で作成する。
+###
+### .emacs
+###
+<<<
+(setq-default tab-width 4 indent-tabs-mode nil)
+
+(add-hook 'php-mode-hook
+          (lambda ()
+            (setq tab-width 4)
+            (setq c-basic-offset 4)))
+>>>
+
+# exit
+$ sudo su -
+
+###
+### PHP8.0 & HTTPD
+###
+
+# amazon-linux-extras enable php8.0
+# yum clean metadata
+# yum -y install php-cli php-pdo php-fpm php-mysqlnd \
+php-mbstring php-xml php-gd php-bcmath php-dba \
+php-dbg php-embedded php-enchant php-gmp php-intl \
+php-ldap php-odbc php-opcache php-pgsql \
+php-process php-snmp php-soap php-pecl-zip \
+php-devel php-pear
+
+# yum -y install mod_ssl zlib-devel curl-devel openssl-devel \
+httpd-devel apr-devel apr-util-devel libffi-devel
+
+# systemctl enable httpd; \
+systemctl start httpd
+
+###
+### MariaDB
+###
+
+# amazon-linux-extras enable mariadb10.5
+# yum clean metadata
+# yum -y install mariadb
+
+###
+### Redis 6
+###
+
+# amazon-linux-extras enable redis6
+# yum clean metadata
+# yum -y install redis

@@ -1,0 +1,828 @@
+###
+### Test data
+###
+
+# mysql -u test2_user -p test2
+
+CREATE TABLE `album` (
+    `id`     INT(11)      NOT NULL AUTO_INCREMENT,
+    `artist` VARCHAR(100) NOT NULL,
+    `title`  VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id)
+);
+
+INSERT INTO `album` (`artist`, `title`) VALUES
+('The Military Wives', 'In My Dreams'),
+('Adele', '21'),
+('Bruce Springsteen', 'Wrecking Ball (Deluxe)'),
+('Lana Del Rey', 'Born To Die'),
+('Gotye', 'Making Mirrors'),
+("David Bowie", "The Next Day (Deluxe Version)"),
+("Bastille", "Bad Blood"),
+("Various Artists", "Call the Midwife (Music From the TV Series)");
+
+select * from album;
+
+exit
+#
+
+###
+### composer
+###
+
+# cd
+# wget https://getcomposer.org/installer -O composer-installer.php
+# php composer-installer.php --filename=composer --install-dir=/usr/local/bin
+# composer self-update
+# rm -f composer-installer.php
+
+###
+### 参照: https://framework.zend.com/learn
+###       https://docs.laminas.dev/
+###       https://docs.laminas.dev/tutorials/
+###
+
+# yum -y install git
+# su - ec2-user
+$ composer create-project -s dev laminas/laminas-mvc-skeleton ~/zf
+$ exit
+
+# mv /home/ec2-user/zf /var/www/zf; \
+chown -R ec2-user:ec2-user /var/www/zf
+
+# cd /etc/httpd/conf.d
+# vi zf.conf
+# cat zf.conf
+<VirtualHost *:80>
+    ServerName srv002.mydomain
+    DocumentRoot /var/www/zf/public
+    SetEnv APPLICATION_ENV "development"       // <-- 環境変数 on efface le commentaire
+    <Directory /var/www/zf/public>
+        DirectoryIndex index.php
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+        <IfModule mod_authz_core.c>
+            Require all granted
+        </IfModule>
+    </Directory>
+</VirtualHost>
+#
+
+# systemctl restart httpd; \
+systemctl restart php-fpm.service
+→(((si sa ne marche pas tu dois check le commande netstat -an | less or more)))
+
+### 例：
+### Client側(Windows10)のC:\Windows\System32\drivers\etc\hosts
+### "192.168.56.131  srv002.mydomain"を追加。
+
+### Check http://srv002.mydomain
+
+###
+### ec2-userに戻る
+###
+# exit
+
+$ cd /var/www/zf
+$ composer -W require laminas/laminas-session //enterを押す。
+$ composer -W require laminas/laminas-db
+
+###
+### 確認
+###
+$ composer suggest --all | less
+
+###
+### The Sample Module
+###
+$ cd /var/www/zf/public
+$ mkdir ~/wrk
+$ cp index.php ~/wrk/index.php
+$ vi index.php
+$ diff ~/wrk/index.php index.php
+8a9,16
+/**
+>  * Display all errors when APPLICATION_ENV is development.
+>  */
+> if ($_SERVER['APPLICATION_ENV'] === 'development') {
+>     error_reporting(E_ALL);
+>     ini_set("display_errors", '1');
+> }
+>
+> /**
+$
+
+$ mkdir /var/www/zf/module/Sample; \
+cd /var/www/zf/module/Sample
+
+$ mkdir config; \
+mkdir src; \
+mkdir src/Controller; \
+mkdir src/Model; \
+mkdir -p view/sample/sample
+
+$ cd /var/www/zf/module/Sample/src
+$ vi Module.php
+$ cat Module.php
+<?php
+namespace Sample;
+
+use Laminas\ModuleManager\Feature\ConfigProviderInterface;
+
+class Module implements ConfigProviderInterface
+{
+    public function getConfig()
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+}
+$ 
+
+$ cd /var/www/zf
+$ cp composer.json ~/wrk/composer.json
+$ vi composer.json
+$ diff ~/wrk/composer.json composer.json
+23c23,24
+<             "Application\\": "module/Application/src/"
+---
+>             "Application\\": "module/Application/src/",
+>             "Sample\\":      "module/Sample/src/"
+$
+
+$ composer dump-autoload
+
+###
+### "composer dump-autoload" で次のファイルが更新される。
+###   1. /var/www/zf/vendor/composer/autoload_psr4.php
+###   2. /var/www/zf/vendor/composer/autoload_static.php
+###
+
+$ cd /var/www/zf/module/Sample/config
+$ vi module.config.php
+$ cat module.config.php
+<?php
+namespace Sample;
+
+return [
+    'controllers' => [
+        'invokables' => [
+            'Sample\Controller\Sample' => 'Sample\Controller\SampleController',
+        ],
+    ],
+    'view_manager' => [
+        'template_path_stack' => [
+            'sample' => __DIR__ . '/../view',
+        ],
+    ],
+];
+$
+
+$ cd /var/www/zf/config
+$ cp modules.config.php ~/wrk/modules.config.php
+$ vi modules.config.php
+$ diff ~/wrk/modules.config.php modules.config.php
+13a14
+>     'Sample',
+$
+
+$ cd /var/www/zf/module/Sample/config
+$ vi module.config.php
+$ cat module.config.php
+<?php
+namespace Sample;
+
+use Laminas\Router\Http\Segment;
+
+return [
+    'controllers' => [
+        'invokables' => [
+            'Sample\Controller\Sample' => 'Sample\Controller\SampleController',
+        ],
+    ],
+
+    'router' => [
+        'routes' => [
+            'sample' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route' => '/sample[/:action[/:id]]',
+                    'constraints' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'id'     => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\SampleController::class,
+                        'action'     => 'index',
+                    ],
+                ],
+            ],
+        ],
+    ],
+
+    'view_manager' => [
+        'template_path_stack' => [
+            'sample' => __DIR__ . '/../view',
+        ],
+    ],
+];
+$
+
+$ cd /var/www/zf/module/Sample/src/Controller
+$ vi SampleController.php
+$ cat SampleController.php
+<?php
+namespace Sample\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+
+class SampleController extends AbstractActionController
+{
+    public function indexAction()
+    {
+    }
+
+    public function addAction()
+    {
+    }
+
+    public function editAction()
+    {
+    }
+
+    public function deleteAction()
+    {
+    }
+}
+$
+
+$ cd /var/www/zf; \
+touch module/Sample/view/sample/sample/index.phtml; \
+touch module/Sample/view/sample/sample/add.phtml; \
+touch module/Sample/view/sample/sample/edit.phtml; \
+touch module/Sample/view/sample/sample/delete.phtml
+
+$ cd /var/www/zf/module/Application/src/Controller
+$ vi MyController.php
+$ cat MyController.php
+<?php
+namespace Application\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+use Laminas\Session\Container;
+use Laminas\View\Model\JsonModel;
+
+class MyController extends AbstractActionController
+{
+    public $config; // Global Configuration
+    public $define; // Global Definitions
+    public $sess;   // My Session
+    public $view;   // ViewModel
+    public $uri;    // URI
+
+    public $aid;    // Authenticate ID
+    public $mid;    // Member ID
+    public $name;   // Member Name
+    public $role;   // Role Array
+    public $sid;    // Session ID
+    public $ver;    // System Version
+    public $mg;     // Menu Group
+
+    public function init()
+    {
+        $this->uri    = $this->getRequest()->getUri();
+        $this->config = $this->_getConfig();
+        $this->define = $this->_getMyDefine();
+        $this->sess   = new Container('mysession');
+        $this->view   = new ViewModel();
+
+        $this->sid    = session_id();
+        $this->aid    = (empty($this->sess->aid))  ?   0 : $this->sess->aid;
+        $this->mid    = (empty($this->sess->mid))  ?   0 : $this->sess->mid;
+        $this->name   = (empty($this->sess->name)) ?  '' : $this->sess->name;
+        $this->role   = (empty($this->sess->role)) ?  [] : $this->sess->role;
+        $this->ver    = (empty($this->sess->ver))  ?  [] : $this->sess->ver;
+        $this->mg     = (empty($this->sess->mg))   ? 'a' : $this->sess->mg;
+    }
+
+    private function _getConfig()
+    {
+        return include __DIR__ . '/../../../../config/autoload/global.php';
+    }
+
+    private function _getMyDefine()
+    {
+        return include __DIR__ . '/../../../../config/autoload/my.define.php';
+    }
+
+    public function gotoLogin()
+    {
+        $this->sess->url = $this->uri->getPath();
+        $url = 'https://' . $this->uri->getHost() . '/auth/login';
+        return $this->redirect()->toUrl($url);
+    }
+}
+$
+
+$ vi /var/www/zf/config/autoload/my.define.php
+$ cat /var/www/zf/config/autoload/my.define.php
+<?php
+return [
+];
+$
+
+$ cd /var/www/zf/module/Sample/src/Controller
+$ vi SampleController.php
+$ cat SampleController.php
+<?php
+namespace Sample\Controller;
+
+use Application\Controller\MyController;
+use Sample\Model\Sample;
+
+class SampleController extends MyController
+{
+    private $_get;
+    private $_post;
+    private $_model;
+
+    private ifunction _init()
+    {
+        parent::init();
+
+        ### if (empty($this->aid)) {
+        ###     return $this->gotoLogin();
+        ### }
+
+        $this->_get   = $this->params()->fromQuery();
+        $this->_post  = $this->params()->fromPost();
+        $this->_model = new Sample($this->config['db'], $this->define);
+
+        $this->layout('layout/layoutApl');
+    }
+
+    public function indexAction()
+    {
+        $this->_init();
+    }
+
+    public function addAction()
+    {
+    }
+
+    public function editAction()
+    {
+    }
+
+    public function deleteAction()
+    {
+    }
+}
+$
+
+$ vi /var/www/zf/module/Application/view/layout/layoutApl.phtml
+$ cat /var/www/zf/module/Application/view/layout/layoutApl.phtml
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Laminas MVC Sample</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <link href="/css/bootstrap.min.css" media="screen" rel="stylesheet" type="text/css">
+        <link href="/css/style.css" media="screen" rel="stylesheet" type="text/css">
+        <link href="/img/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-md navbar-dark mb-4" role="navigation">
+            (NAVI AREA)
+        </nav>
+        <div class="container">
+            <?= $this->content ?>
+            <hr>
+            <footer>
+                (FOOTER AREA)
+            </footer>
+        </div>
+        <script type="text/javascript" src="/js/jquery-3.5.0.min.js"></script>
+        <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    </body>
+</html>
+$
+
+$ mkdir /var/www/zf/module/Application/src/Model; \
+cd /var/www/zf/module/Application/src/Model
+$ vi MyModel.php
+$ cat MyModel.php
+<?php
+namespace Application\Model;
+
+use Laminas\Db\Adapter\Adapter;
+
+class MyModel
+{
+    public $config;
+    public $adapter;
+    public $platform;
+    public $define;
+
+    public function __construct($config, $define = []) {
+        $this->config   = $config;
+        $this->adapter  = new Adapter($config);
+        $this->platform = $this->adapter->getPlatform();
+        $this->define   = $define;
+    }
+
+    public function query($qry) {
+        return $this->adapter->query($qry, Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    public function esc($val) {
+        return $this->platform->quoteValue($val);
+    }
+
+    public function begin() {
+        return $this->query('START TRANSACTION');
+    }
+
+    public function commit() {
+        return $this->query('COMMIT');
+    }
+
+    public function rollback() {
+        return $this->query('ROLLBACK');
+    }
+
+    public function getLastId() {
+
+        $rst = $this->query("SELECT LAST_INSERT_ID() AS `lastId`");
+
+        $lastId = -1;
+        foreach ($rst as $d) {
+            $lastId = $d->lastId;
+        }
+
+        return $lastId;
+    }
+}
+$
+
+$ cd /var/www/zf/module/Sample/src/Model
+$ vi Sample.php
+$ cat Sample.php
+<?php
+namespace Sample\Model;
+
+use Application\Model\MyModel;
+
+class Sample extends MyModel
+{
+}
+$
+
+$ cd /var/www/zf/config/autoload
+$ cp global.php ~/wrk/global.php
+$ vi global.php
+$ diff ~/wrk/global.php global.php
+16c16,24
+<     // ...
+---
+>     'db' => [
+>         'driver'         => 'Pdo',
+>         'dsn'            => 'mysql:dbname=test2;host=localhost',
+>         'driver_options' => [
+>             PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''
+>         ],
+>         'username'       => 'test2_user',
+>         'password'       => 'abcd1234',
+>     ],
+$
+
+$ vi /var/www/zf/module/Sample/view/sample/sample/index.phtml
+$ cat /var/www/zf/module/Sample/view/sample/sample/index.phtml
+Sample indexAction
+$
+
+
+$ mkdir /var/www/zf/module/Top; \
+cd /var/www/zf/module/Top
+$ mkdir config; \
+mkdir src; \
+mkdir src/Controller; \
+mkdir src/Model; \
+mkdir -p view/top/top
+
+$ cd /var/www/zf/module/Top/src
+$ vi Module.php
+$ cat Module.php
+<?php
+namespace Top;
+
+use Laminas\ModuleManager\Feature\ConfigProviderInterface;
+
+class Module implements ConfigProviderInterface
+{
+    public function getConfig()
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+}
+$ 
+
+$ cd /var/www/zf
+$ cp composer.json ~/wrk/composer.json
+$ vi composer.json
+$ diff ~/wrk/composer.json composer.json
+24c24,25
+<             "Sample\\":      "module/Sample/src/"
+---
+>             "Sample\\":      "module/Sample/src/",
+>             "Top\\":         "module/Top/src/"
+$
+
+$ composer dump-autoload
+
+$ cd /var/www/zf/module/Top/config
+$ vi module.config.php
+$ cat module.config.php
+<?php
+namespace Top;
+
+use Laminas\Router\Http\Segment;
+
+return [
+    'controllers' => [
+        'invokables' => [
+            'Top\Controller\Top' => 'Top\Controller\TopController',
+        ],
+    ],
+
+    'router' => [
+        'routes' => [
+            'top' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route' => '/top[/:action[/:id]]',
+                    'constraints' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'id'     => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\TopController::class,
+                        'action'     => 'index',
+                    ],
+                ],
+            ],
+        ],
+    ],
+
+    'view_manager' => [
+        'template_path_stack' => [
+            'top' => __DIR__ . '/../view',
+        ],
+    ],
+];
+$
+
+$ cd /var/www/zf/config
+$ cp modules.config.php ~/wrk/modules.config.php
+$ vi modules.config.php
+$ diff ~/wrk/modules.config.php modules.config.php
+14a15
+>     'Top',
+$
+
+
+$ cd /var/www/zf/module/Top/src/Controller
+$ vi TopController.php
+$ cat TopController.php
+<?php
+namespace Top\Controller;
+
+use Application\Controller\MyController;
+use Top\Model\Top;
+
+class TopController extends MyController
+{
+    private $_get;
+    private $_post;
+    private $_model;
+
+    private function _init()
+    {
+        parent::init();
+
+        ### if (empty($this->aid)) {
+        ###     return $this->gotoLogin();
+        ### }
+
+        $this->_get   = $this->params()->fromQuery();
+        $this->_post  = $this->params()->fromPost();
+        $this->_model = new Top($this->config['db'], $this->define);
+
+        $this->layout('layout/layoutApl');
+    }
+
+    public function indexAction()
+    {
+        $this->_init();
+    }
+}
+$
+
+$ touch /var/www/zf/module/Top/view/top/top/index.phtml
+
+$ cd /var/www/zf/module/Top/src/Model
+$ vi Top.php
+$ cat Top.php
+<?php
+namespace Top\Model;
+
+use Application\Model\MyModel;
+
+class Top extends MyModel
+{
+}
+$
+
+
+$ vi /var/www/zf/module/Top/view/top/top/index.phtml
+$ cat /var/www/zf/module/Top/view/top/top/index.phtml
+Top indexAction
+$
+
+###
+### Ensuring that the home page displays the sample indexAction
+###
+
+$ cd /var/www/zf/module/Application/config
+$ cp module.config.php ~/wrk/module.config.php
+$ vi module.config.php
+$ diff ~/wrk/module.config.php module.config.php
+9a10
+> use Top\Controller\TopController;
+19c20
+<                         'controller' => Controller\IndexController::class,
+---
+>                         'controller' => TopController::class,
+$
+
+###
+### その他(for Excel)
+###
+$ cd /var/www/zf
+$ composer -W require phpoffice/phpspreadsheet
+$ composer dump-autoload
+$ sudo su -
+#
+
+###
+### for Error Logging
+###   error_log(date('Y-m-d H:i:s') . ' ' . __FILE__ . ':' . __LINE__ . "\n", 3, '/var/www/tmp/zf/app.log');
+###
+# mkdir -p /var/www/tmp/zf
+# touch /var/www/tmp/zf/app.log
+# chown -R ec2-user:ec2-user /var/www/tmp;
+# chmod 666 /var/www/tmp/zf/app.log
+
+###
+### Check http://srv002.mydomain
+###
+
+--------------------------------------------------------------------------------
+Somethingモジュールを追加する場合
+
+$ cd /var/www/zf/module
+
+$ mkdir -p Something/config; \
+mkdir -p Something/src; \
+mkdir -p Something/src/Controller; \
+mkdir -p Something/src/Model; \
+mkdir -p Something/view/something/something
+
+$ touch Something/src/Module.php; \
+touch Something/config/module.config.php; \
+touch Something/src/Controller/SomethingController.php; \
+touch Something/src/Model/Something.php; \
+touch Something/view/something/something/index.phtml
+
+$ vi Something/config/module.config.php
+$ cat Something/config/module.config.php
+<?php
+namespace Something;
+
+use Laminas\Router\Http\Segment;
+
+return [
+    'controllers' => [
+        'invokables' => [
+            'Something\Controller\Something' => 'Something\Controller\SomethingController',
+        ],
+    ],
+
+    'router' => [
+        'routes' => [
+            'something' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route' => '/something[/:action[/:id]]',
+                    'constraints' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'id'     => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\SomethingController::class,
+                        'action'     => 'index',
+                    ],
+                ],
+            ],
+        ],
+    ],
+
+    'view_manager' => [
+        'template_path_stack' => [
+            'something' => __DIR__ . '/../view',
+        ],
+    ],
+];
+
+$ vi Something/src/Module.php
+$ cat Something/src/Module.php
+<?php
+namespace Something;
+
+use Laminas\ModuleManager\Feature\ConfigProviderInterface;
+
+class Module implements ConfigProviderInterface
+{
+    public function getConfig()
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+}
+
+$ vi Something/src/Controller/SomethingController.php
+$ cat Something/src/Controller/SomethingController.php
+<?php
+namespace Something\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+
+class SomethingController extends AbstractActionController
+{
+    public function indexAction()
+    {
+    }
+}
+
+$ vi Something/src/Model/Something.php
+$ cat Something/src/Model/Something.php
+<?php
+namespace Something\Model;
+
+class Something
+{
+}
+
+$ vi Something/view/something/something/index.phtml
+$ cat Something/view/something/something/index.phtml
+Something Index Action
+
+$ cd /var/www/zf
+$ vi config/modules.config.php
+追加
+<<<
+return [
+    'Laminas\Db',
+    'Laminas\Session',
+    'Laminas\Router',
+    'Laminas\Validator',
+    'Application',
+    ....
+    ....
+    ....
+    'Something',
+];
+>>>
+
+$ vi composer.json
+autoloadに追加
+<<<
+    "autoload": {
+        "psr-4": {
+            "Application\\":  "module/Application/src/",
+            ....
+            ....
+            ....
+            "Something\\":    "module/Something/src/"
+        }
+    },
+>>>
+
+$ composer dump-autoload
+
+Check http://srv002.mydomain/something
+--------------------------------------------------------------------------------

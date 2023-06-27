@@ -1,0 +1,72 @@
+1) WSL2 のインストール
+https://learn.microsoft.com/ja-jp/windows/wsl/install
+
+インストール終了後再起動がかかり、再起動後にログインすると
+ubuntu のインストールが始まります。
+ubuntu のインストールが終了したらユーザー名とパスワードを入力する画面が出てきますので
+アカウントを作成してください。
+
+2) Windows に docker をインストール
+https://bit.ly/3R2tqwv
+ページ中ごろの「Docker Desktop起動」まででいいです。
+その後 Docker Desktop の設定画面に入り
+Resources → WSL Integration と遷移しして Ubuntu 上で Docker を有効になるようにしてください。
+
+
+3) WSL2 の ubuntu に docker をインストール
+sudo apt update -y
+sudo apt install -y ca-certificates curl gnupg lsb-release
+
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update -y
+
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+sudo usermod -aG docker $USER
+sudo service docker start
+sudo gpasswd -a $(whoami) docker
+sudo chgrp docker /var/run/docker.sock
+sudo service docker restart
+
+
+3) git のインストール
+sudo apt-get install git
+git config --global user.name [任意のユーザ名]
+git config --global user.email [博報堂さんに用意してもらった git のアカウントのメールアドレス]
+
+
+4) composer のインストール
+cd /tmp
+sudo apt update -y
+sudo apt install -y curl php-cli php-mbstring git unzip
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+php composer-setup.php
+php -r "unlink('composer-setup.php');"
+sudo mv ./composer.phar $(dirname $(which php))/composer && chmod +x "$_"
+
+
+4) laravel のインストール
+home ディレクトリに移動
+cd /home/[1 で作ったユーザー名]
+git clone http://git-gbu.japaneast.cloudapp.azure.com/gbu/mitsubishi-office
+(git リポジトリのアカウントを入力)
+
+cd mitsubishi-office
+sudo docker run --rm -u "$(id -u):$(id -g)" -v $(pwd):/var/www/html -w /var/www/html laravelsail/php81-composer:latest composer install --ignore-platform-reqs
+
+sudo apt-get install -y php8.1-dom php8.1-curl
+
+ここまで終えたら一旦 ubuntu を再起動します
+ubuntu のウィンドウを閉じて再び起動します(スタートメニューにいます)
+
+以後は再び /home/[1 で作ったユーザー名]/mitsubishi-office/admin に移動して
+http://git-gbu.japaneast.cloudapp.azure.com/gbu/mitsubishi-office/commit/16a82ea4f3b3b62a82f1fd968cab6c205483d558
+の DEVELOPMENT.md を見ながら「2. `.env`ファイル作成」からインストールしてください。
+
+
+無事にログイン画面が確認出来たら
+php artisan storage:link
+を実行してください。

@@ -1,0 +1,111 @@
+###
+### WordPressの設定とテストデータの追加
+###
+
+http://srv002.mydomain/wordpress/wp-admin/
+
+###
+### テーマの変更
+###
+・ダッシュボード> 外観 > テーマ
+　"Twenty Twenty"[有効化]をクリックします。
+
+###
+### カテゴリーの追加
+###
+・ダッシュボード> 投稿 > カテゴリー
+　[新規カテゴリーの追加]
+　cat001001001
+　cat001001002
+　[一括操作][適用]
+
+###
+### 記事（投稿）の追加
+###
+・ダッシュボード> 投稿 > 新規追加
+　・タイトルを追加
+　　何か書いて、画像も載せる（アップロード）。
+　　[公開]
+　　[公開]:今すぐ
+　　提案：カテゴリーを割り当て
+　　　カテゴリーを指定します。
+　　[公開]
+　・同様に他の記事も追加します。
+
+
+###
+### 備考
+###
+----------------------------------------------------------------------------------------------------
+・記事の取得
+　・カテゴリーに関する記事を取得するクエリ。
+　　表示順は、カテゴリー：昇順、修正日時：降順
+　SELECT p.ID, t.name AS cat, p.post_title, p.post_content FROM wp_posts AS p
+　JOIN wp_term_relationships AS tr ON tr.object_id = p.ID
+　JOIN wp_term_taxonomy AS tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+　JOIN wp_terms AS t ON t.term_id = tt.term_id
+　WHERE p.post_type = 'post' AND p.post_status = 'publish' AND t.name like 'cat%'
+　ORDER BY t.name ASC, p.post_modified DESC
+　;
+
+---
+*************************** 1. row ***************************
+          ID: 16
+         cat: cat001001001
+  post_title: 記事001001001その2
+post_content: <!-- wp:paragraph -->
+<p></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>これはcat001001001に関する記事その2です。</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"id":17,"sizeSlug":"full","linkDestination":"none"} -->
+<figure class="wp-block-image size-full">
+  <img src="http://srv002.mydomain/wordpress/wp-content/uploads/2022/09/20220916b.png" alt="" class="wp-image-17"/>
+</figure>
+<!-- /wp:image -->
+*************************** 2. row ***************************
+          ID: 12
+         cat: cat001001001
+  post_title: 記事001001001その1
+post_content: <!-- wp:paragraph --> ...
+*************************** 3. row ***************************
+          ID: 22
+         cat: cat001001002
+  post_title: 記事001001002その2
+post_content: <!-- wp:paragraph --> ...
+*************************** 4. row ***************************
+          ID: 19
+         cat: cat001001002
+  post_title: 記事001001002その1
+post_content: <!-- wp:paragraph --> ...
+---
+
+　記事の編集で「ブログのトップに固定」にチェックが入っている場合のメモ。
+　ブログのトップに表示するための情報はここ。
+　SELECT option_value FROM wp_options WHERE option_name = 'sticky_posts';
+　例：
+　option_value = 'a:3:{i:0;i:12;i:1;i:19;i:2;i:16;}';
+　これは、「ブログのトップに固定」のチェックが3つあることを示しています。
+　そしてそのwp_posts.IDは次の３つです。
+　12
+　19
+　16
+　この情報と前述の表示順を組み合わると重要な記事をトップに表示できます。
+
+　$str = 'a:3:{i:0;i:12;i:1;i:19;i:2;i:16;}'
+　$obj = unserialize($str);
+　echo var_export($obj, true) . "\n";
+　-- 結果 --
+　array (
+　  0 => 12,
+　  1 => 19,
+　  2 => 16,
+　)
+　----------
+
+----------------------------------------------------------------------------------------------------
+
+

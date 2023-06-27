@@ -1,0 +1,54 @@
+###
+### WYSIWYG-Editor: froala
+###
+
+$ sudo su -
+# yum -y install php-devel
+# pecl install imagick
+# pecl list
+Installed packages, channel pecl.php.net:
+=========================================
+Package Version State
+imagick 3.7.0   stable
+redis   5.3.7   stable
+# cd /etc
+# vi php.ini
+extension=imagick.so  <-- 追加
+#
+
+この2つ(fileinfo, imagick)が有効であることを確認する。
+# php -i | grep -i fileinfo
+# php -i | grep -i imagick
+
+# exit
+$ cd /var/www/zf
+$ composer -W require froala/wysiwyg-editor-php-sdk
+$ composer dump-autoload
+
+// 
+// ログインディレクトリに次のファイルを置いておく。
+//   editor-php-sdk-example-337c5e61489e68779e805e2dc0759b2d567b7b88.zip
+//   froala_editor_4.0.15.zip
+// 
+$ cd
+$ unzip editor-php-sdk-example-337c5e61489e68779e805e2dc0759b2d567b7b88.zip
+$ mkdir xxx
+$ cd xxx
+$ unzip ../froala_editor_4.0.15.zip
+$ cd /var/www/zf/vendor/froala/wysiwyg-editor-php-sdk/examples
+$ cp ~/editor-php-sdk-example-337c5e61489e68779e805e2dc0759b2d567b7b88/* .
+$ cd /var/www/zf/vendor/froala/wysiwyg-editor-php-sdk
+$ cp -R ~/xxx/* .
+$ cd
+$ rm -Rf xxx editor-php-sdk-example-337c5e61489e68779e805e2dc0759b2d567b7b88
+$ rm froala_editor_4.0.15.zip editor-php-sdk-example-337c5e61489e68779e805e2dc0759b2d567b7b88.zip
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------

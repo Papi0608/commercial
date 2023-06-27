@@ -1,0 +1,78 @@
+###
+### WordPressで作成された記事をデプロイするプログラム
+###
+--------------------------------------------------------------------------------
+静的サイトを目指す。
+https://hayashikejinan.com/webwork/php/492/
+  file_put_contents
+  ob_get_contents
+
+$ curl --noproxy srv002.mydomain -s -o b.html 'http://srv002.mydomain/b.php'
+--------------------------------------------------------------------------------
+WordPressで作成された記事はデータベースwp1にありますが、
+記事のデータはデータベースtest2に持ってきます。
+
+記事を持ってくるスクリプトはZF(Laminas)で行います。
+ZFのDBユーザはtest2_userですので権限付与が必要です。
+
+$ mysql -u root -p
+
+GRANT ALL PRIVILEGES ON wp1.* TO 'test2_user'@'localhost';
+GRANT ALL PRIVILEGES ON wp1.* TO 'test2_user'@'192.168.%';
+GRANT ALL PRIVILEGES ON wp1.* TO 'test2_user'@'192.168.224.103';
+
+exit
+$
+--------------------------------------------------------------------------------
+PDOはひとつのDBしか処理できないので、もう一つ用意する。
+
+/var/www/zf/config/autoload/global.php
+
+return [
+    'db' => [
+        'driver'         => 'Pdo',
+        'dsn'            => 'mysql:dbname=test2;host=localhost',
+        'driver_options' => [
+            PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''
+        ],
+        'username'       => 'test2_user',
+        'password'       => 'abcd1234',
+    ],
+    'wp' => [
+        'driver'         => 'Pdo',
+        'dsn'            => 'mysql:dbname=wp1;host=localhost',
+        'driver_options' => [
+            PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''
+        ],
+        'username'       => 'test2_user',
+        'password'       => 'abcd1234',
+    ],
+];
+
+
+Modelももう一つ用意する。
+Controller側でDBアクセスオブジェクトももう一つ用意する。
+
+use Sample\Model\Sample;
+use Sample\Model\Wp;
+
+        $this->_model = new Sample($this->config['db'], $this->define);
+        $this->_wp    = new Wp($this->config['wp'], $this->define);
+--------------------------------------------------------------------------------
+CREATE TABLE `posts000` (
+    `id`       BIGINT, -- WordPress posts_id
+    `cat`      TEXT,
+    `title`    TEXT,
+    `content`  TEXT,
+    `modified` DATETIME,
+    `sticky`   INT,
+    PRIMARY KEY (id)
+);
+
+SELECT `id`, `cat`, `sticky`, `modified`, `title` FROM `posts000` ORDER BY `cat` ASC, `sticky` DESC;
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------

@@ -1,0 +1,102 @@
+###
+### WordPressの追加
+###
+
+・参考
+　・https://it-jog.com/wordpress/install-wordpress-cmd
+
+latest-ja.tar.gz（wordpressのソース）を/root/wrkに置いておく。
+
+###
+### WordPress用DB(wp1)の用意
+###
+
+### ec2-userでログイン
+$ sudo su -
+# mysql -u root -p
+
+CREATE DATABASE wp1 CHARACTER SET utf8;
+
+CREATE USER 'wp1_user'@'localhost' IDENTIFIED BY 'abcd1234';
+GRANT ALL PRIVILEGES ON wp1.* TO 'wp1_user'@'localhost';
+
+CREATE USER 'wp1_user'@'192.168.%' IDENTIFIED BY 'abcd1234';
+GRANT ALL PRIVILEGES ON wp1.* TO 'wp1_user'@'192.168.%';
+
+CREATE USER 'wp1_user'@'192.168.224.103' IDENTIFIED BY 'abcd1234';
+GRANT ALL PRIVILEGES ON wp1.* TO 'wp1_user'@'192.168.224.103';
+
+exit
+#
+
+
+# cd /var/www/zf/public
+# tar xzf ~/wrk/latest-ja.tar.gz
+# cd wordpress
+
+# cp wp-config-sample.php wp-config.php
+# vi wp-config.php
+# diff wp-config-sample.php wp-config.php
+29c29
+< define( 'DB_NAME', 'database_name_here' );
+---
+> define( 'DB_NAME', 'wp1' );
+32c32
+< define( 'DB_USER', 'username_here' );
+---
+> define( 'DB_USER', 'wp1_user' );
+35c35
+< define( 'DB_PASSWORD', 'password_here' );
+---
+> define( 'DB_PASSWORD', 'abcd1234' );
+#
+
+# chown -R apache:apache /var/www/zf/public/wordpress
+
+### -------------------------------------------------------
+### <Directory "/var/www/zf/public/wordpress">のAllowOverrideをAllに設定。
+
+# cd /etc/httpd/conf
+# cp httpd.conf ~/wrk
+# vi httpd.conf
+# diff ~/wrk/httpd.conf httpd.conf
+158a159,164
+> <Directory "/var/www/zf/public/wordpress">
+>     Options Indexes FollowSymLinks
+>     AllowOverride All
+>     Require all granted
+> </Directory>
+>
+#
+
+### -------------------------------------------------------
+
+# systemctl restart httpd; \
+systemctl restart php-fpm.service
+
+###
+### WEBブラウザで表示を確認する。
+### URL --> http://srv002.mydomain/wordpress/
+###
+・必要事項の入力
+　・サイトのタイトル wp1
+　・ユーザー名       wp1usr
+　・パスワード       D%fJp*vt@OejRuus$*
+　・メールアドレス   someone@yahoo.com
+　・「検索エンジンでの表示」のチェック:検索エンジンがサイトをインデックスしないようにする
+・[WordPressをインストール]をクリック。
+===================================================================================
+成功しました !
+WordPress をインストールしました。ありがとうございます。それではお楽しみください !
+
+ユーザー名	wp1usr
+パスワード	D%fJp*vt@OejRuus$*
+選択したパスワード。
+[ログイン]
+===================================================================================
+ログイン後は、ここ（ダッシュボード）に遷移します。
+http://srv002.mydomain/wordpress/wp-admin/
+===================================================================================
+公開ページ
+http://srv002.mydomain/wordpress
+===================================================================================

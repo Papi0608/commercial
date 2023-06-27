@@ -1,0 +1,58 @@
+--
+-- CMS1
+--
+-- CREATE DATABASE `cms1` CHARACTER SET UTF8;
+--
+-- CREATE USER 'cms1_user'@'localhost' IDENTIFIED BY 'abcd1234';
+-- GRANT ALL PRIVILEGES ON `cms1`.* TO 'cms1_user'@'localhost';
+--
+-- CREATE USER 'cms1_user'@'192.168.%' IDENTIFIED BY 'abcd1234';
+-- GRANT ALL PRIVILEGES ON `cms1`.* TO 'cms1_user'@'192.168.%';
+--
+-- CREATE USER 'cms1_user'@'192.168.224.103' IDENTIFIED BY 'abcd1234';
+-- GRANT ALL PRIVILEGES ON `cms1`.* TO 'cms1_user'@'192.168.224.103';
+--
+--
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_master.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_user.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_csv.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_csv_filter.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_xlsx.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_building.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_similar.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_room.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_news.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_inquiry.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_recommend.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_vacancy.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_topics.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_small.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_template.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_fileset.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_filelist.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_pages.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_parts.sql
+-- $ mysql -u cms1_user -p cms1 <ddl_cms1_release.sql
+--
+-- $ mysql -u cms1_user -p cms1 <data_cms1_master.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_user.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_csv_filter.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_building.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_news.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_inquiry.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_recommend.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_vacancy.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_topics.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_small.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_template.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_fileset.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_pages.sql
+-- $ mysql -u cms1_user -p cms1 <data_cms1_parts.sql
+--
+-- または
+--
+-- $ cat ddl_cms1_master.sql ddl_cms1_user.sql ddl_cms1_csv.sql ddl_cms1_csv_filter.sql ddl_cms1_xlsx.sql ddl_cms1_building.sql ddl_cms1_similar.sql ddl_cms1_room.sql ddl_cms1_news.sql ddl_cms1_inquiry.sql ddl_cms1_recommend.sql ddl_cms1_vacancy.sql ddl_cms1_topics.sql ddl_cms1_small.sql ddl_cms1_template.sql ddl_cms1_fileset.sql data_cms1_pages.sql data_cms1_parts.sql >c.sql
+-- $ mysql -u cms1_user -p cms1 <c.sql
+-- $ cat data_cms1_master.sql data_cms1_user.sql data_cms1_csv.sql data_cms1_csv_filter.sql data_cms1_building.sql data_cms1_news.sql data_cms1_inquiry.sql data_cms1_recommend.sql data_cms1_vacancy.sql data_cms1_topics.sql data_cms1_small.sql data_cms1_template.sql data_cms1_fileset.sql data_cms1_pages.sql data_cms1_parts.sql >d.sql
+-- $ mysql -u cms1_user -p cms1 <d.sql
+--

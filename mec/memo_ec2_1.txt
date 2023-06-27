@@ -1,0 +1,110 @@
+--------------------------------------------------------------------------------
+前準備
+・Intel Virtualization Technologyを有効になっていることを確認。
+　これは、PC立ち上げ時のBIOSで設定/確認できます。
+・次のファイルを取得しておく。
+　・amzn2-srv002.vdi
+　　これはamzn2-virtualbox-2.0.20210813.1-x86_64.xfs.gpt.vdiをコピーしてリネーム。
+　　amzn2-virtualbox-2.0.20210813.1-x86_64.xfs.gpt.vdiは原本なので直接使用しない。
+　・Seed.iso
+　・nkf-2.1.5.tar.gz
+
+CMDにてUUIDを新しくしておく。
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" internalcommands sethduuid C:\Users\kojima-t\Desktop\files\AmazonEC2\amzn2-srv002.vdi
+UUIDの確認
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" showhdinfo C:\Users\kojima-t\Desktop\files\AmazonEC2\amzn2-srv002.vdi
+--------------------------------------------------------------------------------
+VirtualBox起動
+--------------------------------------------------------------------------------
+[新規(N)]クリック
+
+名前： srv002
+タイプ： Linux
+バージョン： Red Hat (64-bit)
+[次へ(N)]
+メモリサイズ： 1024MB以上
+[次へ(N)]
+ハードディスク
+　すでにある仮想ハードディスクを使用する(U)
+　　仮想ハードディスクファイルの選択...
+　　　メディア　追加(A)　選択
+　　　"amzn2-srv002.vdi"を指定する。
+[作成]
+--------------------------------------------------------------------------------
+[設定(S)]クリック
+
+・ストレージのコントローラーIDEを選択し、ディスクマークを開き、
+　ダウンロードしたSeed.isoファイルを指定する。
+
+・Network Adapter #2: Host Only Adapter　<--　#2を追加する。
+--------------------------------------------------------------------------------
+[起動(T)]クリック
+
+自動的に初期化機能が動作するので少し待つ。
+--------------------------------------------------------------------------------
+ログイン
+
+amazonlinux login: ec2-user
+Password: amazon
+
+自動的に初期化機能が動作するので少し待つ。
+
+参照：Seed.iso:user-data;chpasswd:list: 
+--------------------------------------------------------------------------------
+$ sudo su -
+# localectl set-keymap jp106
+# timedatectl set-timezone Asia/Tokyo
+# localectl status
+# timedatectl status
+
+# cd /etc/sysconfig/network-scripts
+# vi ifcfg-eth1
+# cat ifcfg-eth1
+BOOTPROTO=dhcp
+DEVICE=eth1
+NM_CONTROLLED=no
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=no
+#
+
+---
+・プロキシ環境の場合、環境変数を設定し、再度ログインします。
+  # vi /etc/profile
+  <<<追加
+  PROXY='http://proxy.office.dca.pise.co.jp:8080'
+  NOPROXY='localhost,127.0.0.1'
+  export http_proxy=$PROXY
+  export HTTP_PROXY=$PROXY
+  export https_proxy=$PROXY
+  export HTTPS_PROXY=$PROXY
+  export no_proxy=$NOPROXY
+  export NO_PROXY=$NOPROXY
+  >>>
+
+  # exitc
+  $ sudo su -
+---
+
+# yum -y update
+# cd /etc/ssh
+# cp sshd_config ~/sshd_config.org
+# vi sshd_config
+# diff ~/sshd_config.org sshd_config
+63c63
+< #PasswordAuthentication yes
+---
+> PasswordAuthentication yes
+65c65
+< PasswordAuthentication no
+---
+> #PasswordAuthentication no
+# shutdown -r now
+
+
+--------------------------------------------------------------------------------
+
+リモートからログイン可能
+
+$ ssh ec2-user@192.168.56.xxx
+--------------------------------------------------------------------------------

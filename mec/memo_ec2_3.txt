@@ -1,0 +1,102 @@
+# mkdir ~/wrk
+
+###
+### MySQL -- Amazon Aurora
+###
+
+# systemctl enable mariadb; \
+systemctl start mariadb
+
+###
+### Redis
+###
+
+# systemctl enable redis; \
+systemctl start redis
+
+###
+### PHP - Apache - FPM
+###
+
+# pecl install redis
+
+全てdefaultで
+enable igbinary serializer support? [no] : 「enter」を押す。
+enable lzf compression support? [no] :「enter」を押す。
+enable zstd compression support? [no] :「enter」を押す。
+
+# cd /etc
+# cp php.ini ~/wrk/php.ini
+# vi php.ini
+# diff ~/wrk/php.ini php.ini
+584c584
+< ;error_log = php_errors.log
+---
+> error_log = /var/log/php_error.log
+884a885
+> extension=redis.so
+902c903
+< ;date.timezone =
+---
+> date.timezone = Asia/Tokyo
+983c984
+< pdo_mysql.default_socket=
+---
+> pdo_mysql.default_socket=/var/lib/mysql/mysql.sock
+1222c1223,1225
+< session.save_handler = files
+---
+> ;session.save_handler = files
+> session.save_handler = redis
+> session.save_path = "tcp://127.0.0.1:6379"
+#
+
+# cd /etc/httpd/conf.d
+# cp php.conf ~/wrk
+# vi php.conf
+# diff ~/wrk/php.conf php.conf
+59,60c59,60
+<     php_value session.save_handler "files"
+<     php_value session.save_path    "/var/lib/php/session"
+---
+>     #php_value session.save_handler "files"
+>     #php_value session.save_path    "/var/lib/php/session"
+#
+
+# cd /etc/php-fpm.d
+# cp www.conf ~/wrk
+# vi www.conf
+# diff ~/wrk/www.conf www.conf
+425,426c425,426
+< php_value[session.save_handler] = files
+< php_value[session.save_path]    = /var/lib/php/session
+---
+> ;php_value[session.save_handler] = files
+> ;php_value[session.save_path]    = /var/lib/php/session
+#
+
+# systemctl restart httpd; \
+systemctl restart php-fpm.service
+
+###
+### DB初期設定
+###
+
+# mysql -u root -p
+Enter password: <-- パスワード入力はCR（Enter）のみ。
+
+set password for 'root'@'localhost' = password('abcd1234');
+
+create database test2 character set utf8;
+
+create user 'test2_user'@'localhost' identified by 'abcd1234';
+grant all privileges on test2.* to 'test2_user'@'localhost';
+
+create user 'test2_user'@'192.168.%' identified by 'abcd1234';
+grant all privileges on test2.* to 'test2_user'@'192.168.%';
+
+create user 'test2_user'@'192.168.224.103' identified by 'abcd1234';
+grant all privileges on test2.* to 'test2_user'@'192.168.224.103';
+
+exit
+#
