@@ -1,0 +1,38 @@
+convertir to stream
+
+dnf --disablerepo '*' --enablerepo extras swap centos-linux-repos centos-stream-repos
+dnf distro-sync
+ mv /home/lara006/mitsubishi-office /var/www/mitsubishi-office; \
+chown -R lara006:lara006 /var/www/mitsubishi-office; \
+chcon -R -t httpd_sys_rw_content_t /var/www/mitsubishi-office
+
+chown -R apache:apache /var/www/mitsubishi-office/storage
+
+
+<VirtualHost *:80>
+    ServerName localhost.mitsubishi
+    DocumentRoot /var/www/lar7/public
+    SetEnv APPLICATION_ENV "development"       
+    <Directory /var/www/lar7/public>
+        DirectoryIndex index.php
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+        <IfModule mod_authz_core.c>
+            Require all granted
+        </IfModule>
+    </Directory>
+</VirtualHost>
+
+
+
+
+<VirtualHost mitsubishi-office:80>
+  DocumentRoot "C:\xampp\htdocs\lar7\public"
+  ServerName mitsubishi-office.com
+  <Directory "C:\xampp\htdocs\lar7\public">
+    AllowOverride All
+    Options All
+    Require all granted
+  </Directory>
+</VirtualHost>
